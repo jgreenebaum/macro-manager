@@ -1,10 +1,13 @@
 import requests
-from config import API_KEY
+import os
 
 class FoodDataCentralAPI:
     def __init__(self):
-        self.key = API_KEY
+        self.key = os.getenv('API_KEY')
         self.baseUrl = "https://api.nal.usda.gov/fdc/v1"
+
+        if not self.key:
+            raise ValueError("API_KEY envrionment variable is not set!")
 
     def getfdcId(self, food: str):
         url = f"{self.baseUrl}/foods/search?query={food}&dataType=Survey%20(FNDDS)&api_key={self.key}"
@@ -41,7 +44,26 @@ class FoodDataCentralAPI:
             print("Invalid input. Please enter a number.")
             return None
         
-    def getFoodData(self, fdcId: int):
+    # def getFoodData(self, fdcId: int):
+    #     url = f"{self.baseUrl}/food/{fdcId}?api_key={self.key}"
+    #     response = requests.get(url)
+        
+    #     # Handle errors if request fails
+    #     if response.status_code != 200:
+    #         print(f"Error: {response.status_code}, {response.text}")
+    #         return None
+        
+    #     foodNutrients = response.json().get('foodNutrients', [])
+        
+    #     # Print the name, amount, and unit of each nutrient
+    #     for nutrient in foodNutrients:
+    #         nutrient_name = nutrient['nutrient']['name']
+    #         amount = nutrient['amount']
+    #         unit = nutrient['nutrient']['unitName']
+    #         print(f"{nutrient_name}: {amount} {unit}")
+
+    def getFoodData(self, food: str):
+        fdcId = self.getfdcId(food)
         url = f"{self.baseUrl}/food/{fdcId}?api_key={self.key}"
         response = requests.get(url)
         
@@ -73,7 +95,7 @@ def main():
 
     # Test with a singular food input
     food = "avocado"
-    fdcId = api.getfdcId(food)
+    fdcId = api.getFoodData(food)
     if fdcId:
         print(f"Selected fdcId: {fdcId}")
 
