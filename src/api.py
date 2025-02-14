@@ -4,14 +4,18 @@ from collections import defaultdict
 
 class FoodDataCentralAPI:
     def __init__(self):
-        self.key = os.getenv('API_KEY')
+        self.key = None
         self.baseUrl = "https://api.nal.usda.gov/fdc/v1"
 
+
+    def setAPIKey(self, key: str):
+        self.key = key
+
+
+    def getfdcId(self, food: str):              
         if not self.key:
-            raise ValueError("API_KEY envrionment variable is not set!")
-
-
-    def getfdcId(self, food: str):
+            raise ValueError("API key is not set. Please set the API key first.")
+        
         url = f"{self.baseUrl}/foods/search?query={food}&dataType=Survey%20(FNDDS)&api_key={self.key}"
         response = requests.get(url)
         
@@ -48,6 +52,9 @@ class FoodDataCentralAPI:
         
 
     def getFoodData(self, foods: list):
+        if not self.key:
+            raise ValueError("API key is not set. Please set the API key first.")
+        
         fdcIds = "/foods?"
         for food in foods:
             fdcId = self.getfdcId(food)
@@ -70,14 +77,6 @@ class FoodDataCentralAPI:
 
         totalNutrients = defaultdict(float)
 
-        # for i, food in enumerate(foods):
-        #     print(f"\nShowing nutrients for {food}:\n")
-        #     for nutrient in responseList[i]:
-        #         nutrient_name = nutrient['nutrient']['name']
-        #         amount = nutrient['amount']
-        #         unit = nutrient['nutrient']['unitName']
-        #         print(f"{nutrient_name}: {amount} {unit}")
-
         # Iterate over each food's nutrient data
         for foodNutrients in responseList:
             for nutrient in foodNutrients:
@@ -90,7 +89,7 @@ class FoodDataCentralAPI:
                     totalNutrients[nutrient_name]["amount"] += amount
                 else:
                     totalNutrients[nutrient_name] = {"amount": amount, "unit": unit}
-
+        
         # Print total nutrient profile
         print("\nTotal Nutrient Profile:\n")
         for nutrient, data in totalNutrients.items():
