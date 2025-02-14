@@ -12,6 +12,29 @@ class FoodDataCentralAPI:
         self.key = key
 
 
+    def getfdcIdOptions(self, food: str):
+        if not self.key:
+            raise ValueError("API key is not set. Please set the API key first.")
+        
+        url = f"{self.baseUrl}/foods/search?query={food}&dataType=Survey%20(FNDDS)&api_key={self.key}"
+        response = requests.get(url)
+
+        # Handle errors if request fails
+        if response.status_code != 200:
+            print(f"Error: {response.status_code}, {response.text}")
+            return None
+        
+        foods = response.json().get('foods', [])
+
+        # No results
+        if not foods:
+            print(f"No results found for '{food}'.")
+            return []
+
+        # Collect name/id pairs
+        nameAndIdPairList = [(foodItem['description'], foodItem['fdcId']) for foodItem in foods]
+        return nameAndIdPairList
+
     def getfdcId(self, food: str):              
         if not self.key:
             raise ValueError("API key is not set. Please set the API key first.")

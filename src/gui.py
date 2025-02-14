@@ -58,7 +58,39 @@ class GUI(tk.Tk):
             foods = self.foods_entry.get().split(",")
             self.foods_entry.delete(0, tk.END)
             foods = [food.strip() for food in foods]
-            self.api.getMacros(foods)
+            self.selectedfdcIds = []
+
+            def displayFoodOptions(foodIndex):
+                if foodIndex >= len(foods):
+                    return
+
+                food = foods[foodIndex]
+                options = self.api.getfdcIdOptions(food)
+                if not options:
+                    displayFoodOptions(foodIndex + 1)
+                    return
+
+                for widget in self.mainWindow_frame.winfo_children():
+                    widget.destroy()
+
+                tk.Label(self.mainWindow_frame, text=f"Select option for: {food}").pack(anchor="w")
+
+                varList = []
+                for option in options:
+                    var = tk.BooleanVar()
+                    chk = tk.Checkbutton(self.mainWindow_frame, text=option[0], variable=var)  # Accessing the first element of the tuple
+                    chk.pack(anchor="w")
+                    varList.append((var, option[1]))  # Accessing the second element of the tuple
+
+                def confirmSelection():
+                    for var, fdcId in varList:
+                        if var.get():
+                            self.selectedfdcIds.append(fdcId)
+                    displayFoodOptions(foodIndex + 1)
+
+                tk.Button(self.mainWindow_frame, text="Confirm", command=confirmSelection).pack(anchor="w")
+
+            displayFoodOptions(0)
 
 if __name__ == "__main__":
     gui = GUI()
