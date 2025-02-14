@@ -1,5 +1,6 @@
 import requests
 import os
+from collections import defaultdict
 
 class FoodDataCentralAPI:
     def __init__(self):
@@ -67,13 +68,34 @@ class FoodDataCentralAPI:
     def getMacros(self, foods: list):
         responseList = self.getFoodData(foods)
 
-        for i, food in enumerate(foods):
-            print(f"\nShowing nutrients for {food}:\n")
-            for nutrient in responseList[i]:
+        totalNutrients = defaultdict(float)
+
+        # for i, food in enumerate(foods):
+        #     print(f"\nShowing nutrients for {food}:\n")
+        #     for nutrient in responseList[i]:
+        #         nutrient_name = nutrient['nutrient']['name']
+        #         amount = nutrient['amount']
+        #         unit = nutrient['nutrient']['unitName']
+        #         print(f"{nutrient_name}: {amount} {unit}")
+
+        # Iterate over each food's nutrient data
+        for foodNutrients in responseList:
+            for nutrient in foodNutrients:
                 nutrient_name = nutrient['nutrient']['name']
                 amount = nutrient['amount']
                 unit = nutrient['nutrient']['unitName']
-                print(f"{nutrient_name}: {amount} {unit}")
+
+                # If the nutrient is already in totalNutrients, add the amount
+                if nutrient_name in totalNutrients:
+                    totalNutrients[nutrient_name]["amount"] += amount
+                else:
+                    totalNutrients[nutrient_name] = {"amount": amount, "unit": unit}
+
+        # Print total nutrient profile
+        print("\nTotal Nutrient Profile:\n")
+        for nutrient, data in totalNutrients.items():
+            formattedAmount = f"{data['amount']:.3f}"
+            print(f"{nutrient}: {formattedAmount} {data['unit']}")
 
             
 # Main function for testing
