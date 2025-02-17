@@ -1,5 +1,6 @@
 import requests
-import os
+import logging
+from urllib.parse import quote
 from collections import defaultdict
 
 class FoodDataCentralAPI:
@@ -7,84 +8,101 @@ class FoodDataCentralAPI:
         self.key = None
         self.baseUrl = "https://api.nal.usda.gov/fdc/v1"
 
-
-    def setAPIKey(self, key: str):
+    def set_api_key(self, key: str):
+        """
+        Sets the API key for the FoodDataCentralAPI instance.
+        
+        Args:
+            key (str): The API key to set.
+        """
         self.key = key
 
+    def get_fdc_id_options(self, food: str):
+        """
+        Fetches FDC ID options for a given food query.
 
-    def getfdcIdOptions(self, food: str):
+        Args:
+            food (str): The food to search for.
+        
+        Returns:
+            list: A list of tuples containing the food name and its FDC ID.
+        """
         if not self.key:
             raise ValueError("API key is not set. Please set the API key first.")
         
-        url = f"{self.baseUrl}/foods/search?query={food}&dataType=Survey%20(FNDDS)&api_key={self.key}"
+        url = f"{self.baseUrl}/foods/search?query={quote(str(food))}&dataType=Survey%20(FNDDS)&api_key={self.key}"
         response = requests.get(url)
 
         # Handle errors if request fails
         if response.status_code != 200:
-            print(f"Error: {response.status_code}, {response.text}")
+            logging.error(f"Error: {response.status_code}, {response.text}")
             return None
         
         foods = response.json().get('foods', [])
 
         # No results
         if not foods:
-            print(f"No results found for '{food}'.")
+            logging.info(f"No results found for {food}")
             return []
 
         # Collect name/id pairs
-        nameAndIdPairList = [(foodItem['description'], foodItem['fdcId']) for foodItem in foods]
-        return nameAndIdPairList
+        name_and_id_pair_list = [(food_item['description'], food_item['fdcId']) for food_item in foods]
+        return name_and_id_pair_list
     
+    def get_food_data(self, foods: list):
+        """
+        Fetches food data for a list of foods.
 
-    def getFoodData(self, foods: list):
+        Args:
+            foods (list): A list of FDC IDs to fetch data for.
+
+        Returns:
+            list: A list of food nutrient data.      
+        """
         if not self.key:
             raise ValueError("API key is not set. Please set the API key first.")
         
-        fdcIds = "/foods?"
+        fdc_ids = "/foods?"
         for food in foods:
-            fdcIds += f"fdcIds={food}&"
-        url = f"{self.baseUrl}{fdcIds}api_key={self.key}"
+            fdc_ids += f"fdcIds={quote(str(food))}&"
+        url = f"{self.baseUrl}{fdc_ids}api_key={self.key}"
         response = requests.get(url)
         
         # Handle errors if request fails
         if response.status_code != 200:
-            print(f"Error: {response.status_code}, {response.text}")
+            logging.error(f"Error: {response.status_code}, {response.text}")
             return None
         
         # Save all food nutrient data to a list
-        foodNutrientsList = [food["foodNutrients"] for food in response.json()]
-        return foodNutrientsList
+        food_nutrients_list = [food["foodNutrients"] for food in response.json()]
+        return food_nutrients_list
 
+    def get_macros(self, foods: list):
+        """
+        Fetches the total nutrient profile for a list of foods.
 
-    def getMacros(self, foods: list):
-        responseList = self.getFoodData(foods)
+        Args:
+            foods (list): A list of foods to fetch data for.
+        
+        Returns:
+            dict: A dictionary containing the total nutrient profile.
+        """
+        response_list = self.getFoodData(foods)
 
-        totalNutrients = defaultdict(lambda: {"amount": 0.0, "unit": ""})
+        total_nutrients = defaultdict(lambda: {"amount": 0.0, "unit": ""})
 
         # Iterate over each food's nutrient data
-        for foodNutrients in responseList:
-            for nutrient in foodNutrients:
+        for food_nutrients in response_list:
+            for nutrient in food_nutrients:
                 nutrient_name = nutrient['nutrient']['name']
                 amount = nutrient['amount']
                 unit = nutrient['nutrient']['unitName']
 
-                # If the nutrient is already in totalNutrients, add the amount
-                if nutrient_name in totalNutrients:
-                    totalNutrients[nutrient_name]["amount"] += amount
+                # If the nutrient is already in total_nutrients, add the amount
+                if nutrient_name in total_nutrients:
+                    total_nutrients[nutrient_name]["amount"] += amount
                 else:
-                    totalNutrients[nutrient_name] = {"amount": amount, "unit": unit}
+                    total_nutrients[nutrient_name] = {"amount": amount, "unit": unit}
 
         # Return total nutrient profile
-        return totalNutrients
-
-            
-# Main function for testing
-def main():
-    api = FoodDataCentralAPI()
-
-    # Test with multiple food inputs
-    foods = ["avocado","apple"]
-    fdcId = api.getMacros(foods)
-
-if __name__ == "__main__":
-    main()
+        return total_nutrients
