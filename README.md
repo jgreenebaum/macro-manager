@@ -1,7 +1,4 @@
 # macro-manager
 
 ## Setup
-The user must `Copy` & `Paste` the below text into their python terminal:
-```
-$env:API_KEY="your-api-key-here"
-```
+The user must acquire an api key from USDA FoodData Central [here](https://fdc.nal.usda.gov/api-key-signup).
