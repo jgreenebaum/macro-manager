@@ -70,12 +70,16 @@ class GUI(tk.Tk):
             self.api_key_display.insert(tk.END, API_KEY)
             self.api_key_display.config(state='disabled')
 
-    """
-    submit_get_macros
-
-    This method is called when the user clicks the "Get Macros" button.
-    """
     def submit_get_macros(self):
+        """
+        This method is called when the user clicks the "Get Macros" button.
+
+        Args:
+            None
+        
+        Returns:
+            None
+        """
         if self.foods_entry.get():
             if not self.api.key:
                 print("API key is not set. Please set the API key first.")
