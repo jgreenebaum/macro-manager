@@ -8,28 +8,31 @@ class GUI(tk.Tk):
         self.title("macro-manager")
         self.geometry("600x800")
         self.api = api.FoodDataCentralAPI()
-        self.selectedfdcIds = []
-        self.foodsToProcess = []
+        self.selected_fdc_ids = []
+        self.foods_to_process = []
         self.create_widgets()
 
-
-    """
-    create_widgets
-
-    This method creates the widgets for the GUI.
-    """
     def create_widgets(self):
-        self.APIKey_label = tk.Label(self, text="Enter API Key:")
-        self.APIKey_label.grid(row=0, column=0, padx=10, pady=10, sticky="w")
+        """
+        Creates the widgets for the GUI.
 
-        self.APIKey_entry = tk.Entry(self)
-        self.APIKey_entry.grid(row=0, column=1, padx=10, pady=10, sticky="w")
+        Args:
+            None
 
-        self.APIKey_button = tk.Button(self, text="Submit", command=self.submitAPIKey)
-        self.APIKey_button.grid(row=0, column=2, padx=10, pady=10, sticky="w")
+        Returns:
+            None
+        """
+        self.api_key_label = tk.Label(self, text="Enter API Key:")
+        self.api_key_label.grid(row=0, column=0, padx=10, pady=10, sticky="w")
 
-        self.APIKey_display = tk.Text(self, height=1, width=50, state='disabled')
-        self.APIKey_display.grid(row=1, column=0, columnspan=3, padx=10, pady=10, sticky="w")
+        self.api_key_entry = tk.Entry(self)
+        self.api_key_entry.grid(row=0, column=1, padx=10, pady=10, sticky="w")
+
+        self.api_key_button = tk.Button(self, text="Submit", command=self.submit_api_key)
+        self.api_key_button.grid(row=0, column=2, padx=10, pady=10, sticky="w")
+
+        self.api_key_display = tk.Text(self, height=1, width=50, state='disabled')
+        self.api_key_display.grid(row=1, column=0, columnspan=3, padx=10, pady=10, sticky="w")
 
         self.foods_label = tk.Label(self, text="Enter Foods (comma separated):")
         self.foods_label.grid(row=2, column=0, padx=10, pady=10, sticky="w")
@@ -37,79 +40,88 @@ class GUI(tk.Tk):
         self.foods_entry = tk.Entry(self)
         self.foods_entry.grid(row=2, column=1, columnspan=2, padx=10, pady=10, sticky="w")
 
-        self.getMacros_button = tk.Button(self, text="Get Macros", command=self.submitGetMacros)
+        self.getMacros_button = tk.Button(self, text="Get Macros", command=self.submit_get_macros)
         self.getMacros_button.grid(row=2, column=2, padx=10, pady=10, sticky="w")
 
-        self.mainWindow_frame = tk.Frame(self, width=400, height=300, bg="white")
-        self.mainWindow_frame.grid(row=3, column=0, columnspan=3, padx=10, pady=10, sticky="nsew")
+        self.main_window_frame = tk.Frame(self, width=400, height=300, bg="white")
+        self.main_window_frame.grid(row=3, column=0, columnspan=3, padx=10, pady=10, sticky="nsew")
 
         self.grid_columnconfigure(0, weight=1)
         self.grid_columnconfigure(1, weight=1)
         self.grid_columnconfigure(2, weight=1)
         self.grid_rowconfigure(3, weight=1)
 
+    def submit_api_key(self):
+        """
+        This method is called when the user clicks the "Submit" button for the API key.
+
+        Args:
+            None
+        
+        Returns:
+            None
+        """
+        if self.api_key_entry.get():
+            API_KEY = self.api_key_entry.get()
+            self.api.set_api_key(API_KEY)
+            self.api_key_entry.delete(0, tk.END)
+            self.api_key_display.config(state='normal')
+            self.api_key_display.delete(1.0, tk.END)
+            self.api_key_display.insert(tk.END, API_KEY)
+            self.api_key_display.config(state='disabled')
 
     """
-    submitAPIKey
-
-    This method is called when the user clicks the "Submit" button for the API key.
-    """
-    def submitAPIKey(self):
-        if self.APIKey_entry.get():
-            API_KEY = self.APIKey_entry.get()
-            self.api.setAPIKey(API_KEY)
-            self.APIKey_entry.delete(0, tk.END)
-            self.APIKey_display.config(state='normal')
-            self.APIKey_display.delete(1.0, tk.END)
-            self.APIKey_display.insert(tk.END, API_KEY)
-            self.APIKey_display.config(state='disabled')
-
-
-    """
-    submitGetMacros
+    submit_get_macros
 
     This method is called when the user clicks the "Get Macros" button.
     """
-    def submitGetMacros(self):
+    def submit_get_macros(self):
         if self.foods_entry.get():
             if not self.api.key:
                 print("API key is not set. Please set the API key first.")
                 return
             foods = self.foods_entry.get().split(",")
             self.foods_entry.delete(0, tk.END)
-            self.foodsToProcess = [food.strip() for food in foods]
-            self.processNextFood()
+            self.foods_to_process = [food.strip() for food in foods]
+            self.process_next_food()
 
-    
-    """
-    processNextFood
+    def process_next_food(self):
+        """
+        Processes the next food in the list of foods to process.
 
-    This method processes the next food in the list of foods to process.
-    """
-    def processNextFood(self):
-        if self.foodsToProcess:
-            food = self.foodsToProcess.pop(0)
-            options = self.api.getfdcIdOptions(food)
-            self.displayFoodOptions(food, options)
+        Args:
+            None
+        
+        Returns:
+            None
+        """
+        if self.foods_to_process:
+            food = self.foods_to_process.pop(0)
+            options = self.api.get_fdc_id_options(food)
+            self.display_food_options(food, options)
         else:
-            self.displayNutrientProfile()
+            self.display_nutrient_profile()
 
+    def display_food_options(self, food, options):
+        """
+        Displays the food options for the user to select from.
 
-    """
-    displayFoodOptions
+        Args:
+            food (str): The food name.
+            options (list): The list of food options.
 
-    This method displays the food options for the user to select from.  
-    """
-    def displayFoodOptions(self, food, options):
-        for widget in self.mainWindow_frame.winfo_children():
+        Returns:
+            None
+        """
+        for widget in self.main_window_frame.winfo_children():
             widget.destroy()
         
-        label = tk.Label(self.mainWindow_frame, text=f"Select an option for {food}:")
+        label = tk.Label(self.main_window_frame, text=f"Select an option for {food}:")
         label.pack(pady=10)
 
-        self.food_options = tk.StringVar(value=[f"{opt[0]} (fdcId: {opt[1]})" for opt in options])
+        self.food_options = tk.StringVar(value=[f"{opt[0]} (fdc_id: {opt[1]})" for opt in options])
         
-        listbox_frame = tk.Frame(self.mainWindow_frame)
+        listbox_frame = tk.Frame(self.main_window_frame)
         listbox_frame.pack(pady=10)
 
         scrollbar = tk.Scrollbar(listbox_frame, orient="vertical")
@@ -118,40 +130,47 @@ class GUI(tk.Tk):
         scrollbar.pack(side="right", fill="y")
         listbox.pack(side="left", fill="both", expand=True)
 
-        select_button = tk.Button(self.mainWindow_frame, text="Select", command=lambda: self.selectFoodOption(listbox, options))
+        select_button = tk.Button(self.main_window_frame, text="Select", command=lambda: self.select_food_option(listbox, options))
         select_button.pack(pady=10)
 
+    def select_food_option(self, listbox, options):
+        """
+        Selects the food option that the user has selected.
+        
+        Args:
+            listbox (tk.Listbox): The listbox containing the food options.
+            options (list): The list of food options.
+        
+        Returns:
+            None
+        """   
+        selected_index = listbox.curselection()
+        if selected_index:
+            selected_option = options[selected_index[0]]
+            self.selected_fdc_ids.append(selected_option[1])
+            print(f"Selected fdc_id: {selected_option[1]}")
+            self.process_next_food()
 
-    """
-    selectFoodOption
+    def display_nutrient_profile(self):
+        """
+        Displays the total nutrient profile for the selected foods.
 
-    This method is called when the user selects a food option from the listbox.
-    """
-    def selectFoodOption(self, listbox, options):
-        selectedIndex = listbox.curselection()
-        if selectedIndex:
-            selectedOption = options[selectedIndex[0]]
-            self.selectedfdcIds.append(selectedOption[1])
-            print(f"Selected fdcId: {selectedOption[1]}")
-            self.processNextFood()
+        Args:
+            None
 
-
-    """
-    displayNutrientProfile
-
-    This method is called when the user has selected all food options.
-    """
-    def displayNutrientProfile(self):
-        for widget in self.mainWindow_frame.winfo_children():
+        Returns:
+            None     
+        """
+        for widget in self.main_window_frame.winfo_children():
             widget.destroy()
 
-        totalNutrients = self.api.getMacros(self.selectedfdcIds)
+        total_nutrients = self.api.get_macros(self.selected_fdc_ids)
 
-        label = tk.Label(self.mainWindow_frame, text="Total Nutrient Profile:")
+        label = tk.Label(self.main_window_frame, text="Total Nutrient Profile:")
         label.pack(pady=10)
 
-        canvas = tk.Canvas(self.mainWindow_frame)
-        scrollbar = tk.Scrollbar(self.mainWindow_frame, orient="vertical", command=canvas.yview)
+        canvas = tk.Canvas(self.main_window_frame)
+        scrollbar = tk.Scrollbar(self.main_window_frame, orient="vertical", command=canvas.yview)
         scrollable_frame = tk.Frame(canvas)
 
         scrollable_frame.bind(
@@ -167,19 +186,22 @@ class GUI(tk.Tk):
         canvas.pack(side="left", fill="both", expand=True)
         scrollbar.pack(side="right", fill="y")
 
-        for nutrient, data in totalNutrients.items():
-            formattedAmount = f"{data['amount']:.3f}"
-            nutrient_label = tk.Label(scrollable_frame, text=f"{nutrient}: {formattedAmount} {data['unit']}")
+        for nutrient, data in total_nutrients.items():
+            formatted_amount = f"{data['amount']:.3f}"
+            nutrient_label = tk.Label(scrollable_frame, text=f"{nutrient}: {formatted_amount} {data['unit']}")
             nutrient_label.pack(pady=2)
 
+    def clear_main_window(self):
+        """
+        Clears the main window frame.
 
-    """
-    clearMainWindow
+        Args:
+            None
 
-    This method clears the main window frame.
-    """
-    def clearMainWindow(self):
-        for widget in self.mainWindow_frame.winfo_children():
+        Returns:
+            None 
+        """
+        for widget in self.main_window_frame.winfo_children():
             widget.destroy()
 
 if __name__ == "__main__":

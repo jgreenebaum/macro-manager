@@ -6,7 +6,7 @@ from collections import defaultdict
 class FoodDataCentralAPI:
     def __init__(self):
         self.key = None
-        self.baseUrl = "https://api.nal.usda.gov/fdc/v1"
+        self.base_url = "https://api.nal.usda.gov/fdc/v1"
 
     def set_api_key(self, key: str):
         """
@@ -14,6 +14,9 @@ class FoodDataCentralAPI:
         
         Args:
             key (str): The API key to set.
+        
+        Returns:
+            None
         """
         self.key = key
 
@@ -30,7 +33,7 @@ class FoodDataCentralAPI:
         if not self.key:
             raise ValueError("API key is not set. Please set the API key first.")
         
-        url = f"{self.baseUrl}/foods/search?query={quote(str(food))}&dataType=Survey%20(FNDDS)&api_key={self.key}"
+        url = f"{self.base_url}/foods/search?query={quote(str(food))}&dataType=Survey%20(FNDDS)&api_key={self.key}"
         response = requests.get(url)
 
         # Handle errors if request fails
@@ -65,7 +68,7 @@ class FoodDataCentralAPI:
         fdc_ids = "/foods?"
         for food in foods:
             fdc_ids += f"fdcIds={quote(str(food))}&"
-        url = f"{self.baseUrl}{fdc_ids}api_key={self.key}"
+        url = f"{self.base_url}{fdc_ids}api_key={self.key}"
         response = requests.get(url)
         
         # Handle errors if request fails
@@ -87,7 +90,7 @@ class FoodDataCentralAPI:
         Returns:
             dict: A dictionary containing the total nutrient profile.
         """
-        response_list = self.getFoodData(foods)
+        response_list = self.get_food_data(foods)
 
         total_nutrients = defaultdict(lambda: {"amount": 0.0, "unit": ""})
 
