@@ -10,6 +10,7 @@ class GUI(tk.Tk):
         self.api = api.FoodDataCentralAPI()
         self.selected_fdc_ids = []
         self.foods_to_process = []
+        self.food_amounts = []
         self.create_widgets()
 
     def create_widgets(self):
@@ -34,7 +35,7 @@ class GUI(tk.Tk):
         self.api_key_display = tk.Text(self, height=1, width=50, state='disabled')
         self.api_key_display.grid(row=1, column=0, columnspan=3, padx=10, pady=10, sticky="w")
 
-        self.foods_label = tk.Label(self, text="Enter Foods (comma separated):")
+        self.foods_label = tk.Label(self, text="Enter Foods (semicolon separated):")
         self.foods_label.grid(row=2, column=0, padx=10, pady=10, sticky="w")
 
         self.foods_entry = tk.Entry(self)
@@ -84,7 +85,7 @@ class GUI(tk.Tk):
             if not self.api.key:
                 print("API key is not set. Please set the API key first.")
                 return
-            foods = self.foods_entry.get().split(",")
+            foods = self.foods_entry.get().split(";")
             self.foods_entry.delete(0, tk.END)
             self.foods_to_process = [food.strip() for food in foods]
             self.process_next_food()
@@ -153,7 +154,37 @@ class GUI(tk.Tk):
             selected_option = options[selected_index[0]]
             self.selected_fdc_ids.append(selected_option[1])
             print(f"Selected fdc_id: {selected_option[1]}")
-            self.process_next_food()
+
+            # Prompt for the amount
+            self.clear_main_window()
+            label = tk.Label(self.main_window_frame, text=f"Enter amount for {selected_option[0]} (default is 100g):")
+            label.pack(pady=10)
+
+            self.amount_entry = tk.Entry(self.main_window_frame)
+            self.amount_entry.pack(pady=10)
+            
+            submit_button = tk.Button(self.main_window_frame, text="Submit", command=lambda: self.submit_food_amount(selected_option[1]))
+            submit_button.pack(pady=10)
+
+    def submit_food_amount(self, fdc_id):
+        """
+        Submits the amount for the selected food and processes the next food.
+        
+        Args:
+            fdc_id (str): The FDC ID of the selected food.
+        
+        Returns:
+            None
+        """
+        amount = self.amount_entry.get()
+        if not amount:
+            amount = 100.0  # Default to 100g if no amount is specified
+        else:
+            amount = float(amount)
+        
+        self.food_amounts.append(amount)
+        print(f"food_amounts: {self.food_amounts}")
+        self.process_next_food()
 
     def display_nutrient_profile(self):
         """
@@ -168,7 +199,7 @@ class GUI(tk.Tk):
         for widget in self.main_window_frame.winfo_children():
             widget.destroy()
 
-        total_nutrients = self.api.get_macros(self.selected_fdc_ids)
+        total_nutrients = self.api.get_macros(self.selected_fdc_ids, self.food_amounts)
 
         label = tk.Label(self.main_window_frame, text="Total Nutrient Profile:")
         label.pack(pady=10)

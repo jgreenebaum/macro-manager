@@ -32,8 +32,7 @@ class FoodDataCentralAPI:
         """
         if not self.key:
             raise ValueError("API key is not set. Please set the API key first.")
-        
-        url = f"{self.base_url}/foods/search?query={quote(str(food))}&dataType=Survey%20(FNDDS)&api_key={self.key}"
+        url = f"{self.base_url}/foods/search?query={quote(str(food))}&api_key={self.key}"
         response = requests.get(url)
 
         # Handle errors if request fails
@@ -80,12 +79,13 @@ class FoodDataCentralAPI:
         food_nutrients_list = [food["foodNutrients"] for food in response.json()]
         return food_nutrients_list
 
-    def get_macros(self, foods: list):
+    def get_macros(self, foods: list, amounts: list):
         """
         Fetches the total nutrient profile for a list of foods.
 
         Args:
             foods (list): A list of foods to fetch data for.
+            amounts (list): A list of amounts for each food in the same order as foods.
         
         Returns:
             dict: A dictionary containing the total nutrient profile.
@@ -95,17 +95,17 @@ class FoodDataCentralAPI:
         total_nutrients = defaultdict(lambda: {"amount": 0.0, "unit": ""})
 
         # Iterate over each food's nutrient data
-        for food_nutrients in response_list:
+        for food_nutrients, amount in zip(response_list, amounts):
             for nutrient in food_nutrients:
                 nutrient_name = nutrient['nutrient']['name']
-                amount = nutrient['amount']
+                nutrient_amount = nutrient['amount'] * (amount / 100)
                 unit = nutrient['nutrient']['unitName']
 
                 # If the nutrient is already in total_nutrients, add the amount
                 if nutrient_name in total_nutrients:
-                    total_nutrients[nutrient_name]["amount"] += amount
+                    total_nutrients[nutrient_name]["amount"] += nutrient_amount
                 else:
-                    total_nutrients[nutrient_name] = {"amount": amount, "unit": unit}
+                    total_nutrients[nutrient_name] = {"amount": nutrient_amount, "unit": unit}
 
         # Return total nutrient profile
         return total_nutrients
