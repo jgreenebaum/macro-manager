@@ -35,22 +35,25 @@ class GUI(tk.Tk):
         self.api_key_display = tk.Text(self, height=1, width=50, state='disabled')
         self.api_key_display.grid(row=1, column=0, columnspan=3, padx=10, pady=10, sticky="w")
 
+        self.api_limit_label = tk.Label(self, text="API Calls Remaining: N/A")
+        self.api_limit_label.grid(row=2, column=0, columnspan=3, padx=10, pady=10, sticky="w")
+
         self.foods_label = tk.Label(self, text="Enter Foods (semicolon separated):")
-        self.foods_label.grid(row=2, column=0, padx=10, pady=10, sticky="w")
+        self.foods_label.grid(row=3, column=0, padx=10, pady=10, sticky="w")
 
         self.foods_entry = tk.Entry(self)
-        self.foods_entry.grid(row=2, column=1, columnspan=2, padx=10, pady=10, sticky="w")
+        self.foods_entry.grid(row=3, column=1, columnspan=2, padx=10, pady=10, sticky="w")
 
         self.getMacros_button = tk.Button(self, text="Get Macros", command=self.submit_get_macros)
-        self.getMacros_button.grid(row=2, column=2, padx=10, pady=10, sticky="w")
+        self.getMacros_button.grid(row=3, column=2, padx=10, pady=10, sticky="w")
 
         self.main_window_frame = tk.Frame(self, width=400, height=300, bg="white")
-        self.main_window_frame.grid(row=3, column=0, columnspan=3, padx=10, pady=10, sticky="nsew")
+        self.main_window_frame.grid(row=4, column=0, columnspan=3, padx=10, pady=10, sticky="nsew")
 
         self.grid_columnconfigure(0, weight=1)
         self.grid_columnconfigure(1, weight=1)
         self.grid_columnconfigure(2, weight=1)
-        self.grid_rowconfigure(3, weight=1)
+        self.grid_rowconfigure(4, weight=1)
 
     def submit_api_key(self):
         """
@@ -103,6 +106,7 @@ class GUI(tk.Tk):
         if self.foods_to_process:
             food = self.foods_to_process.pop(0)
             options = self.api.get_fdc_id_options(food)
+            self.update_api_limit()
             self.display_food_options(food, options)
         else:
             self.display_nutrient_profile()
@@ -200,6 +204,7 @@ class GUI(tk.Tk):
             widget.destroy()
 
         total_nutrients = self.api.get_macros(self.selected_fdc_ids, self.food_amounts)
+        self.update_api_limit()
 
         label = tk.Label(self.main_window_frame, text="Total Nutrient Profile:")
         label.pack(pady=10)
@@ -225,6 +230,20 @@ class GUI(tk.Tk):
             formatted_amount = f"{data['amount']:.3f}"
             nutrient_label = tk.Label(scrollable_frame, text=f"{nutrient}: {formatted_amount} {data['unit']}")
             nutrient_label.pack(pady=2)
+
+    def update_api_limit(self):
+        """
+        Updates the API call limit label.
+
+        Args:
+            None
+
+        Returns:
+            None
+        """
+        limit = self.api.X_RateLimit_Limit
+        remaining = self.api.X_RateLimit_Remaining
+        self.api_limit_label.config(text=f"API Calls Remaining: {remaining}/{limit}")
 
     def clear_main_window(self):
         """

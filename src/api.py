@@ -7,6 +7,8 @@ class FoodDataCentralAPI:
     def __init__(self):
         self.key = None
         self.base_url = "https://api.nal.usda.gov/fdc/v1"
+        self.X_RateLimit_Limit = None
+        self.X_RateLimit_Remaining = None
 
     def set_api_key(self, key: str):
         """
@@ -34,6 +36,9 @@ class FoodDataCentralAPI:
             raise ValueError("API key is not set. Please set the API key first.")
         url = f"{self.base_url}/foods/search?query={quote(str(food))}&api_key={self.key}"
         response = requests.get(url)
+
+        self.X_RateLimit_Limit = response.headers.get("X-RateLimit-Limit")
+        self.X_RateLimit_Remaining = response.headers.get("X-RateLimit-Remaining")
 
         # Handle errors if request fails
         if response.status_code != 200:
@@ -69,6 +74,9 @@ class FoodDataCentralAPI:
             fdc_ids += f"fdcIds={quote(str(food))}&"
         url = f"{self.base_url}{fdc_ids}api_key={self.key}"
         response = requests.get(url)
+        
+        self.X_RateLimit_Limit = response.headers.get("X-RateLimit-Limit")
+        self.X_RateLimit_Remaining = response.headers.get("X-RateLimit-Remaining")
         
         # Handle errors if request fails
         if response.status_code != 200:
